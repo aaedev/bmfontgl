@@ -1,0 +1,21 @@
+Starting Program
+gl_basics.cpp:CheckGLVersionSupport:98 DEBUG OpenGl Version supported 4.5
+Starting to parse font
+Passing font
+Fontfile here is lucida.fnt
+Finished to parse font
+Texture x is 256, y is 256, components 4
+window.cpp:WinMain:113 DEBUG Font Loaded Sucessfully
+Starting to parse font
+Passing font
+Fontfile here is snap.fnt
+Finished to parse font
+Texture x is 512, y is 512, components 4
+window.cpp:WinMain:120 DEBUG Font Loaded Sucessfully
+Starting to parse font
+Passing font
+Fontfile here is times.fnt
+Finished to parse font
+Texture x is 256, y is 256, components 4
+window.cpp:WinMain:127 DEBUG Font Loaded Sucessfully
+Closing log, ending program.
