@@ -31,48 +31,48 @@ For more information, please refer to <http://unlicense.org/>
 #include <cstdarg>
 #include "log.h"
 
-
 FILE *stream;
 
 int Log::open(char *filename)
 {
 	errno_t err;
 
- if ((err = fopen_s( &stream, filename, "w")) != NULL) return 0; /* Opened succesfully. */
- 
- return -1; /* Failed. */
+	if ((err = fopen_s(&stream, filename, "w")) != NULL) return 0; // Opened succesfully. 
+
+	return -1; // Failed. 
 }
+
 
 int Log::write(char *format, ...)
 {
- va_list ptr; /* get an arg pointer */
- int status = -1;
- 
- if (stream != NULL)
- {
-  /* initialize ptr to point to the first argument after the format string */
-  va_start(ptr, format);
- 
-  /* Write to logfile. */
-  status = vfprintf(stream, format, ptr); // Write passed text.
-  fprintf(stream, "\n"); // New line..
- 
-  va_end(ptr);
- 
-  /* Flush file. */
-  fflush(stream);
- }
+	va_list ptr; // get an arg pointer 
+	int status = -1;
 
- return status;
+	if (stream != NULL)
+	{
+		// initialize ptr to point to the first argument after the format string 
+		va_start(ptr, format);
+
+		// Write to logfile. */
+		status = vfprintf(stream, format, ptr); // Write passed text.
+		fprintf(stream, "\n"); // New line..
+
+		va_end(ptr);
+
+		// Flush file. 
+		fflush(stream);
+	}
+
+	return status;
 }
 
 
 void Log::close()
 {
 	WRLOG("Closing log, ending program.");
-	 if (stream != NULL)
-	 {
-	  fflush(stream);
-	  fclose(stream);
-	 }
+	if (stream != NULL)
+	{
+		fflush(stream);
+		fclose(stream);
+	}
 }

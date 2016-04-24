@@ -43,12 +43,14 @@ For more information, please refer to <http://unlicense.org/>
 #include "stb_image.h"
 #include "stb_image_write.h"
 
+//OpenGL Globals for context
 HDC hDC;
 HGLRC hRC;
 
 #pragma warning (disable : 4996)
 
-//Enable OpenGL
+
+//Enable OpenGL 2.0 Context
 void CreateGLContext()
 {
 	PIXELFORMATDESCRIPTOR pfd;
@@ -109,14 +111,26 @@ void FreeTexture(GLuint texture)
 	glDeleteTextures(1, &texture);
 }
 
+void FreeTex(TEX *fonttex)
+{
+	if (fonttex)
+	{
+		glDeleteTextures(1, &fonttex->texid);
+		delete fonttex;
+	}
+}
 
-/*----------------------------------TEXTURES----------------------------------*/
-GLuint LoadPNG(std::string filename)
+//----------------------------------TEXTURE Handling----------------------------------
+//This function has a lot more options in my main library
+//This is just a minimum build.
+TEX *LoadPNG(std::string filename) 
 {
 	GLuint tex = 0;
 	int x = 0;
 	int y = 0;
 	int comp = 0;
+
+	TEX *temptex = new (TEX);
 
 	unsigned char *image_data = stbi_load(filename.c_str(), &x, &y, &comp, STBI_rgb_alpha);
 	if (!image_data) {
@@ -146,9 +160,9 @@ GLuint LoadPNG(std::string filename)
 			bottom++;
 		}
 	}
-	//Gen Texture
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	//Create Texture
+	glGenTextures(1, &temptex->texid);
+	glBindTexture(GL_TEXTURE_2D, temptex->texid);
 	glTexImage2D(
 		GL_TEXTURE_2D,
 		0,
@@ -161,7 +175,7 @@ GLuint LoadPNG(std::string filename)
 		image_data
 	);
 
-	//glGenerateMipmap(GL_TEXTURE_2D); //Only if using opengl 3+
+	//glGenerateMipmap(GL_TEXTURE_2D); //Only if using opengl 3+, next example...
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -173,7 +187,13 @@ GLuint LoadPNG(std::string filename)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
 
 	stbi_image_free(image_data); //Now that we're done making a texture, free the image data
-	return tex;
+	
+								 //set image data properties
+	temptex->bpp = comp;
+	temptex->height = x;
+	temptex->width = y;
+	
+	return temptex;
 }
 
 
@@ -192,14 +212,13 @@ void ViewOrtho(int width, int height)
 	glViewport(0, 0, width, height);             // Set Up An Ortho View	 
 	glMatrixMode(GL_PROJECTION);			  // Select Projection
 	glLoadIdentity();						  // Reset The Matrix
-	//glOrtho( 0, width , height , 0, -1, 1 );	  // Select Ortho 2D Mode (640x480)
 	glOrtho(0, width, 0, height, -1, 1);	  // Select Ortho 2D Mode (640x480)
 	glMatrixMode(GL_MODELVIEW);				  // Select Modelview Matrix
 	glLoadIdentity();						  // Reset The Matrix
 }
 
 
-void gl_point(float x, float y)
+void GLPoint(float x, float y)
 {
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(.5f, 1.0f, .5f);
@@ -209,7 +228,7 @@ void gl_point(float x, float y)
 	glEnd();
 }
 
-void gl_line(float sx, float sy, float ex, float ey)
+void GLLine(float sx, float sy, float ex, float ey)
 {
 	glBegin(GL_LINES);
 	glVertex2f(sx, sy);
@@ -217,7 +236,7 @@ void gl_line(float sx, float sy, float ex, float ey)
 	glEnd();
 }
 
-void rect(int xmin, int xmax, int ymin, int ymax)
+void GLRect(int xmin, int xmax, int ymin, int ymax)
 {
 	glBegin(GL_QUADS);
 	glTexCoord2i(0, 1); glVertex2i(xmin, ymin);
@@ -228,7 +247,7 @@ void rect(int xmin, int xmax, int ymin, int ymax)
 }
 
 
-void use_texture(GLuint *texture, GLboolean linear, GLboolean mipmapping)
+void UseTexture(GLuint *texture, GLboolean linear, GLboolean mipmapping)
 {
 	GLenum filter = linear ? GL_LINEAR : GL_NEAREST;
 	glBindTexture(GL_TEXTURE_2D, *texture);
@@ -241,7 +260,7 @@ void use_texture(GLuint *texture, GLboolean linear, GLboolean mipmapping)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (GLfloat)filter);
 }
 
-void setBlendMode(int mode)
+void SetBlendMode(int mode)
 {
 	if (mode) {
 		glEnable(GL_ALPHA_TEST);

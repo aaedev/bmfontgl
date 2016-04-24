@@ -34,8 +34,7 @@ BMFont *Lucida;
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 
 // Simple, generic window init //
-int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                    LPSTR lpCmdLine, int iCmdShow )
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int iCmdShow )
 {
   WNDCLASS wc;
   
@@ -107,28 +106,32 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
   ViewOrtho(WinWidth,WinHeight);
  
   //Load and Initialize the Fonts
-
+  wrlog("Starting to parse fonts.");
+ 
   Lucida = new BMFont(WinWidth,WinHeight);
-  if (!Lucida->loadFont("lucida.fnt"))
+  if (!Lucida->LoadFont("lucida.fnt"))
   {
    MessageBox(NULL, L"Error, font file not found, exiting", L"File Not Found",MB_ICONERROR | MB_OK);
    Quit = TRUE;
+   //PostQuitMessage(-1);
   }
-  LOG_DEBUG("Font Loaded Sucessfully");
+    LOG_DEBUG("Font Loaded Sucessfully");
   
   Snap = new BMFont(WinWidth, WinHeight);
-  if (!Snap->loadFont("snap.fnt"))
+  if (!Snap->LoadFont("snap.fnt"))
   {
    MessageBox(NULL, L"Error, font file not found, exiting", L"File Not Found",MB_ICONERROR | MB_OK);
    Quit = TRUE;
+   //PostQuitMessage(-1);
   }
   LOG_DEBUG("Font Loaded Sucessfully");
 
   Times = new BMFont(WinWidth, WinHeight);
-   if (!Times->loadFont("times.fnt"))
+   if (!Times->LoadFont("times.fnt"))
   {
    MessageBox(NULL, L"Error, font file not found, exiting", L"File Not Found",MB_ICONERROR | MB_OK);
    Quit = TRUE;
+  // PostQuitMessage(-1);
   }
   LOG_DEBUG("Font Loaded Sucessfully");
   
@@ -149,19 +152,18 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     } else {
 
-  // ********** OpenGL drawing code, very simple, just to show of the font. **********
+  // ********** OpenGL drawing code, very simple, just to show off the font. **********
 
-      //glClearColor( 0.2f, 0.2f, 0.0f, 0.2f );
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	 glClear( GL_COLOR_BUFFER_BIT );
       
 	  // setup texture mapping
       glEnable( GL_TEXTURE_2D );
 
 	  glLoadIdentity();	
-	  Times->setAlign(AlignCenter);
-	  Times->setScale(1.5f);
-	  Times->setColor(250,251,252,255);
+	  Times->SetAlign(BMFont::AlignCenter);
+	  Times->SetScale(1.5f);
+	  Times->SetColor(250,251,252,255);
 	  Times->Print(0,280,"A different font, centered. Kerning: To Ti");
 	
 	  /*
@@ -172,16 +174,15 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	  Snap->setScale(1.0f);
 	  Snap->Print(0, 0, "This is standard printing.");
 	  */
-	  Snap->setAngle(0);
-	  Snap->setScale(2.3f);
-	  Snap->setAlign(AlignNear);
+	  Snap->SetAngle(0);
+	  Snap->SetScale(2.3f);
+	  Snap->SetAlign(BMFont::AlignNear);
 	  Snap->Print(40.0,180, "Scaling makes it Big!");
 	  
-	   Snap->setScale(1.0f);
-	   Snap->setAngle(30);
-	 
+	  Snap->SetScale(1.0f);
+	  Snap->SetAngle(30);
 	  Snap->Print(130.0,300, "The next line is right here.");
-	  Snap->setAngle(0);
+	  Snap->SetAngle(0);
 	  Snap->Print(130.0,350, "Another long line here.");
 	  //gl_point(40.0f , 180 );
 
@@ -200,15 +201,12 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   // ********** Cleanup and exit gracefully. **********
- 
   // shutdown OpenGL
- 
   delete Lucida;
   delete Snap;
   delete Times;
   DeleteGLContext();
   LogClose();
-
   // destroy the window 
   DestroyWindow( hWnd );
 
@@ -217,8 +215,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
 //Simple Message Pump Proc ///////////////////////////////////////////////////////
-LRESULT CALLBACK WndProc( HWND hWnd, UINT message,
-                          WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
 
   switch ( message ) {
@@ -241,9 +238,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message,
 
   case VK_F1: {SnapShot();return 0;}
 
-  case VK_F2: {Times->useKerning(false);Snap->useKerning(false); Lucida->useKerning(false); LOG_DEBUG("Times kerning disabled");return 0;}
+  case VK_F2: {Times->UseKerning(false);Snap->UseKerning(false); Lucida->UseKerning(false); LOG_DEBUG("Times kerning disabled");return 0;}
 
-  case VK_F3: {Times->useKerning(true);Snap->useKerning(true); Lucida->useKerning(true);LOG_DEBUG("Times kerning enabled");return 0;}
+  case VK_F3: {Times->UseKerning(true);Snap->UseKerning(true); Lucida->UseKerning(true);LOG_DEBUG("Times kerning enabled");return 0;}
 
     }
     return 0;

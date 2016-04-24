@@ -1,4 +1,3 @@
-
 #ifndef __COLORDEF__
 #define _COLORDEF_
 

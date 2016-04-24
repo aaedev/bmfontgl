@@ -32,10 +32,6 @@ For more information, please refer to <http://unlicense.org/>
 #ifndef LOG_H
 #define LOG_H
 
-#include <cstdio>
-#include <cstring>
-#include <cstdarg>
-
 #define LogOpen(f) Log::open((char *)(f))
 #define LogClose() Log::close()
 #define LOG_DEBUG(str,...) Log::write("%s:%s:%d DEBUG " str, __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)

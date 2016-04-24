@@ -29,36 +29,52 @@ For more information, please refer to <http://unlicense.org/>
 
 #pragma once
 
-#include <string>
-
 #ifndef GL_BASICS_H
 #define GL_BASICS_H
 
+#include <string>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//Texture helper structure, this is the basis for a little mini texture manager I use in another project.
+//It's used here so I don't have to edit the bmfont files to use in my bigger project.
 
+typedef struct
+{
+	GLuint texid;
+	int width;
+	int height;
+	int bpp;
+	std::string name;
+} TEX;
+/*
+class TEX {
+public:
+
+	GLuint texid;
+	int width;
+	int height;
+	int bpp;
+	std::string name;
+
+	TEX() : texid(0), width(0), height(0), bpp(0), name(0) { }
+	//TEX(float x, float y, float tx, float ty, rgb_t colors) : x(x), y(y), tx(tx), ty(ty), colors(colors) {}
+
+};
+*/
 void CheckGLVersionSupport();
 void ViewOrtho(int width, int height);
-void rect(int xmin,int xmax, int ymin , int ymax);
-GLuint LoadPNG(std::string filename);
-void use_texture(GLuint texture[], GLboolean linear, GLboolean mipmapping);
-void set_blendmode(int mode);
+
+TEX *LoadPNG(std::string filename);
+void UseTexture(GLuint *texture, GLboolean linear, GLboolean mipmapping);
+void SetBlendMode(int mode);
 void FreeTexture( GLuint fonttex );
+void FreeTex(TEX *fonttex);
 void CreateGLContext();
 void DeleteGLContext();
 void GlSwap();
 void SnapShot();
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height);
-void setBlendMode(int mode);
-void gl_point(float x,float y);
-void gl_line(float sx, float sy, float ex, float ey);
-
-
-#ifdef __cplusplus
-} 
-#endif
- 
+void GLRect(int xmin, int xmax, int ymin, int ymax);
+void GLPoint(float x,float y);
+void GLLine(float sx, float sy, float ex, float ey);
 
 #endif

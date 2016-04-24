@@ -33,22 +33,23 @@ For more information, please refer to <http://unlicense.org/>
 #include <vector>
 #include <map>
 #include "colordefs.h"
+#include "gl_basics.h"
 
- const enum fontalign { NONE, AlignNear, AlignCenter, AlignFar };
- const enum fontorigin { Top, Bottom };
 
 //This can and should be substituted by your own Vec2f implementation
-class vec2fp
+class fpoint
 {
 public:
 	float x;
 	float y;
-	vec2fp(float x, float y) : x(x), y(y) {}
-	vec2fp() : x(0), y(0) { }
+	fpoint(float x, float y) : x(x), y(y) {}
+	fpoint() : x(0), y(0) {}
+	~fpoint() {};
 };
 
 
-class txdata {
+class txdata
+{
 public:
 
 	float x, y;
@@ -57,7 +58,6 @@ public:
 
 	txdata() : x(0), y(0), tx(0), ty(0), colors(0) { }
 	txdata(float x, float y, float tx, float ty, rgb_t colors) : x(x), y(y), tx(tx), ty(ty), colors(colors) {}
-
 };
 
 
@@ -86,8 +86,7 @@ public:
 	short Page;
 
 	CharDescriptor() : x(0), y(0), Width(0), Height(0), XOffset(0), YOffset(0),
-		XAdvance(0), Page(0)
-	{ }
+		XAdvance(0), Page(0) { }
 };
 
 
@@ -96,52 +95,59 @@ class BMFont
 
 public:
 
-	bool  loadFont(std::string fontfile);
-	void  setColor(int r, int g, int b, int a) { fcolor = MAKE_RGBA(r, g, b, a); fcolor2 = 0; }
-	void  setColor(rgb_t startcolor, rgb_t endcolor, int dir);
-	void  setColor(rgb_t color) { fcolor = color; }
-	void  setBlend(int b) { fblend = b; }
-	void  setScale(float);
-	void  SetCaching(bool en);
-	void  clearCache() { txlist.clear(); };
-	void  setAngle(int);
-	void  setAlign(fontalign align);
-	void  setOrigin(fontorigin origin);
-	float getHeight() { return LineHeight * fscale; }
-	void  useKerning(bool b) { usekern = (b != 0); }
-
-	void  Print(float x, float y, const char *fmt, ...);
-	void  Print(float scale, float x, float y, const char *fmt, ...);
-	void  Print(float scale, rgb_t color, float x, float y, const char *fmt, ...);
-
-	float getStringWidth(const char *);
-
-
-	void  Render();
+	enum fontalign { NONE, AlignNear, AlignCenter, AlignFar };
+	enum fontorigin { Top, Bottom };
+	//Font load function
+	bool  BMFont::LoadFont(std::string fontfile);
+	//Adjusters
+	void  BMFont::SetColor(int r, int g, int b, int a) { fcolor = MAKE_RGBA(r, g, b, a); fcolor2 = 0; }
+	void  BMFont::SetColor(rgb_t startcolor, rgb_t endcolor, int dir);
+	void  BMFont::SetColor(rgb_t color) { fcolor = color; }
+	void  BMFont::SetBlend(int b) { fblend = b; }
+	void  BMFont::SetScale(float);
+	void  BMFont::SetCaching(bool en);
+	void  BMFont::ClearCache() { txlist.clear(); };
+	void  BMFont::SetAngle(int);
+	void  BMFont::SetAlign(fontalign align);
+	void  BMFont::SetOrigin(fontorigin origin);
+	float BMFont::GetHeight() { return LineHeight * fscale; }
+	void  BMFont::UseKerning(bool b) { UseKern = b; }
+	//Pathing functions.
+	void BMFont::SetPath(std::string &path);
+	void BMFont::SetPath(const char *path);
+	std::string BMFont::GetPath();
+	//Printing
+	void  BMFont::Print(float x, float y, const char *fmt, ...);
+	void  BMFont::Print(float scale, float x, float y, const char *fmt, ...);
+	void  BMFont::Print(float x, float y, rgb_t color, float scale, const char *fmt, ...);
+	void  BMFont::Print(float y, rgb_t color, float scale, int angle, const char *fmt, ...);
+    //Screen related functions
+	float BMFont::GetStringWidth(const char *);
+	float BMFont::GetStringWidth(std::string &string);
+	//Renderer Function
+	void  BMFont::Render();
 
 	BMFont(int width, int height)
 	{
+		ftexid = nullptr;
 		surface_width = width;
 		surface_height = height;
-		mathTableInit();
-		setColor(RGB_WHITE);
+		MathTableInit();
+		SetColor(RGB_WHITE);
 		fcolor2 = 0;
-		mkern_count = 0;
-		ftexid = -1;
+		KernCount = 0;
 		fblend = 0;
 		fscale = 1.0;
 		fangle = 0;
 		fcache = false;
-		falign = NONE;
-		forigin = Bottom;
-		usekern = true;
+		falign = fontalign::NONE;
+		forigin = fontorigin::Bottom;
+		UseKern = true;
 	};
 	~BMFont();
 
+
 private:
-
-	enum { MAX_CHARS = 1024 };
-
 	//Character and page variables
 	short LineHeight;
 	short Base;
@@ -149,37 +155,39 @@ private:
 	short Height;
 	short Pages;
 	short Outline;
-	short mkern_count;
+	short KernCount;
 	std::map<int, CharDescriptor> Chars;     //Character Descriptor Map
 	std::vector<KearningInfo> Kearn;        //Kerning info 
 	std::vector<txdata> txlist;             //Vertex Array Data
-	std::string mpngname;                    //Png File name storage for loading
+	std::string Pngname;                    //Png File name storage for loading
 
 	//Modifiers
-	bool   usekern;							//Whether or not to process kerning information 
-	rgb_t  fcolor;							//Font current color
-	rgb_t  fcolor2;							//Second font color for gradient effects
-	GLuint ftexid;							//Font Texture ID
-	float  fscale;							//Current Font scaling factor
-	int    fblend;								//Current Rendering Blending Value"Do I need this?"
-	int    falign;								//Font Alignment Variable
-	bool   forigin;							//Set Font origin Top Or Bottom
-	int    fangle;								//Set font angle
-	bool   fcache;                             //Enable Text Caching. WARNING! Text must be pre-staged before entering main program loop!
-	int	   surface_width;                      //Width of the orthographic 2D surface the text is going on
-	int    surface_height;                     //Height of the orthographic 2D surface the text is going on
+	bool UseKern;							//Whether or not to process kerning information 
+	rgb_t fcolor;							//Font current color
+	rgb_t fcolor2;							//Second font color for gradient effects
+	TEX *ftexid;							//Font Texture ID
+	float fscale;							//Current Font scaling factor
+	int fblend;								//Current Rendering Blending Value"Do I need this?"
+	int falign;								//Font Alignment Variable
+	bool forigin;							//Set Font origin Top Or Bottom
+	int fangle;								//Set font angle
+	bool fcache;                            //Enable Text Caching. WARNING! Text must be pre-staged before entering main program loop!
+	int surface_width;                      //Width of the orthographic 2D surface the text is going on
+	int surface_height;                     //Height of the orthographic 2D surface the text is going on
+	std::string datapath;                   //Path for data files, if empty use the root directory    
 
 	//Internal Functions
-	bool parseFont(const std::string &);
-	int  getKerningPair(int, int);
-	void printKerningPairs();
-	void sortKerningPairs();
-	void printString(float x, float y, char *textstr);
+	bool BMFont::ParseFont(const std::string &);
+	int  BMFont::GetKerningPair(int, int);
+	void BMFont::PrintKerningPairs();
+	void BMFont::SortKerningPairs();
+	void BMFont::PrintString(float x, float y, char *textstr);
+	//void AddKerningPair(int first, int second, int amount);
 
 	//Math Functions
-	void   mathTableInit();
-	vec2fp makePoint(float x, float y) { vec2fp p; p.x = x; p.y = y; return p; }
-	vec2fp rotateAroundPoint(float, float, float, float, float, float);
+	void   BMFont::MathTableInit();
+	fpoint BMFont::MakePoint(float x, float y) { fpoint p; p.x = x; p.y = y; return p; }
+	fpoint BMFont::RotateAroundPoint(float, float, float, float, float, float);
 
 	//Math Table data for rotation
 	float _sin[360];
