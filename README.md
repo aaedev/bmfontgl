@@ -1,6 +1,6 @@
 ## BMFontGL
 
-This is a free implementation of the bmfont font program from anglecode.com. This is an update of my googlecode.com code, with many fixes and updates. This is designed to be a simple "drop in and run" class, and can be modified any way you want with no licensing restrictions.
+This is a free implementation of the bmfont font program from angelcode.com. This is an update of my googlecode.com code, with many fixes and updates. This is designed to be a simple "drop in and run" class, and can be modified any way you want with no licensing restrictions.
 
 
 ## Code Example
