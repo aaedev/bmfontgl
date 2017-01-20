@@ -25,6 +25,12 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org/>
+
+Version 3.0 2017 aaedev@gmail.com
+*Back after an extended hiatus
+*General Bug Fixes
+*Added lots of comments
+*Preparation for shader version
 */
 
 #ifndef __BMFONT__
@@ -47,7 +53,7 @@ public:
 	~fpoint() {};
 };
 
-
+//This too can be replaced 
 class txdata
 {
 public:
@@ -72,7 +78,7 @@ public:
 	KearningInfo() : First(0), Second(0), Amount(0) { }
 };
 
-
+//This is the actual Character class that hold the data for each char 
 class CharDescriptor
 {
 
@@ -89,13 +95,13 @@ public:
 		XAdvance(0), Page(0) { }
 };
 
-
+//This is the main class file
 class BMFont
 {
 
 public:
 
-	enum fontalign { NONE, AlignNear, AlignCenter, AlignFar };
+	enum fontalign { AlignNone, AlignNear, AlignCenter, AlignFar };
 	enum fontorigin { Top, Bottom };
 	//Font load function
 	bool  BMFont::LoadFont(std::string fontfile);
@@ -129,34 +135,34 @@ public:
 
 	BMFont(int width, int height)
 	{
-		ftexid = nullptr;
-		surface_width = width;
-		surface_height = height;
-		MathTableInit();
-		SetColor(RGB_WHITE);
-		fcolor2 = 0;
-		KernCount = 0;
-		fblend = 0;
-		fscale = 1.0;
-		fangle = 0;
-		fcache = false;
-		falign = fontalign::NONE;
-		forigin = fontorigin::Bottom;
-		UseKern = true;
+		ftexid = nullptr;					//GL Texture ID for the Font Atlas
+		surface_width = width;              //Size of texture atlas width
+		surface_height = height;			//Size of texture atlas height 
+		MathTableInit();					//Math table needs to be initialized on first use
+		SetColor(RGB_WHITE);			    //Default color is White
+		fcolor2 = 0;						//Not Used at this time
+		KernCount = 0;						//Set the Total for Kerning Information
+		fblend = 0;							//Blending Value for Depreciated GL 2 Functions.
+		fscale = 1.0;						//Default scaling value
+		fangle = 0;							//Default Rotation Angle
+		fcache = false;						//Whether or not to use caching
+		falign = fontalign::AlignNone;		//Default Drawing alignment. 
+		forigin = fontorigin::Bottom;		//Default drawing Origin
+		UseKern = true;						//To use the supplied kerning values or not
 	};
 	~BMFont();
 
 
 private:
 	//Character and page variables
-	short LineHeight;
-	short Base;
-	short Width;
-	short Height;
-	short Pages;
-	short Outline;
-	short KernCount;
-	std::map<int, CharDescriptor> Chars;     //Character Descriptor Map
+	short LineHeight; 
+	short Base;								//Captured but not used in my code. What is this used for?
+	short Width;							//Width in pixels of the texture atlas. My code only supports 1 png currently.
+	short Height;							//Height in pixels of the texture atlas. My code only supports 1 png currently.
+	short Pages;							//Number of pages, currently I only support 1
+	short Outline;							//TBD
+	short KernCount;						//Total for Kerning Information
+	std::map<int, CharDescriptor> Chars;    //Character Descriptor Map
 	std::vector<KearningInfo> Kearn;        //Kerning info 
 	std::vector<txdata> txlist;             //Vertex Array Data
 	std::string Pngname;                    //Png File name storage for loading
@@ -164,14 +170,14 @@ private:
 	//Modifiers
 	bool UseKern;							//Whether or not to process kerning information 
 	rgb_t fcolor;							//Font current color
-	rgb_t fcolor2;							//Second font color for gradient effects
+	rgb_t fcolor2;							//Second font color for gradient/shading effects, currently not enabled or used
 	TEX *ftexid;							//Font Texture ID
 	float fscale;							//Current Font scaling factor
-	int fblend;								//Current Rendering Blending Value"Do I need this?"
+	int fblend;								//Current Rendering Blending Value "Do we need this?"
 	int falign;								//Font Alignment Variable
 	bool forigin;							//Set Font origin Top Or Bottom
 	int fangle;								//Set font angle
-	bool fcache;                            //Enable Text Caching. WARNING! Text must be pre-staged before entering main program loop!
+	bool fcache;                            //Enable Text Caching. WARNING! Text must be pre-staged before entering main program loop! (This is unrefined code)
 	int surface_width;                      //Width of the orthographic 2D surface the text is going on
 	int surface_height;                     //Height of the orthographic 2D surface the text is going on
 	std::string datapath;                   //Path for data files, if empty use the root directory    

@@ -1,5 +1,7 @@
 /*
 BASIC BMFont example implementation with Kerning, for C++ and OpenGL 2.0+
+Completely self contained, drop into any Opengl 2.0 - 3.2 Project and use.
+For 3.3 plus and GL ES, see the shader based version, coming soon.
 
 This is free and unencumbered software released into the public domain.
 
@@ -38,18 +40,19 @@ http://www.gamedev.net/topic/330742-quick-tutorial-variable-width-bitmap-fonts/
 
 Although I'm giving this away, I'd appreciate an email with fixes or better code!
 
-aaedev@gmail.com 2016 Revision 2.2
+aaedev@gmail.com 2017 Revision 3.0
 */
 
 #include <windows.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include "glext.h"
+#include <GL/gl.h>					//Please replace this with GLEW or some other library in your own implementation
+#include <GL/glu.h>					//Please replace this with GLEW or some other library in your own implementation
+#include "glext.h"					//Please replace this with GLEW or some other library in your own implementation
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cstdarg>					//va_start, va_end, std::va_list
 #include "log.h"
 #include "bmfont.h"
 #include "gl_basics.h"
@@ -58,18 +61,15 @@ aaedev@gmail.com 2016 Revision 2.2
 
 /**
 Parses the font definition file and reads the specified keywords.
-This could be broken out in other, more robust parsing code.
+This could be broken out in other, more robust (and more compact) parsing code.
+Next release this parsing code may change significantly.
 */
 bool BMFont::ParseFont(const std::string &fontfile)
 {
-
 	std::string Line;
 	std::string Read, Key, Value;
 	std::size_t i;
-	int first, second, amount;
-
 	wrlog("Fontfile here is %s", fontfile.c_str());
-
 	std::ifstream Stream(fontfile.c_str());
 
 	KearningInfo K;
@@ -97,32 +97,19 @@ bool BMFont::ParseFont(const std::string &fontfile)
 				//assign the correct value
 				Converter << Value;
 				if (Key == "lineHeight")
-				{
 					Converter >> LineHeight;
-				}
 				else if (Key == "base")
-				{
 					Converter >> Base;
-				}
 				else if (Key == "scaleW")
-				{
 					Converter >> Width;
-				}
 				else if (Key == "scaleH")
-				{
 					Converter >> Height;
-				}
 				else if (Key == "pages")
-				{
 					Converter >> Pages;
-				}
 				else if (Key == "outline")
-				{
 					Converter >> Outline;
-				}
 			}
 		}
-
 		else if (Read == "page")
 		{
 			while (!LineStream.eof())
@@ -146,7 +133,6 @@ bool BMFont::ParseFont(const std::string &fontfile)
 				}
 			}
 		}
-
 		else if (Read == "char")
 		{
 			//This is data for each specific character.
@@ -163,47 +149,26 @@ bool BMFont::ParseFont(const std::string &fontfile)
 				//Assign the correct value
 				Converter << Value;
 				if (Key == "id")
-				{
 					Converter >> CharID;
-				}
 				else if (Key == "x")
-				{
 					Converter >> C.x;
-				}
 				else if (Key == "y")
-				{
 					Converter >> C.y;
-				}
 				else if (Key == "width")
-				{
 					Converter >> C.Width;
-				}
 				else if (Key == "height")
-				{
 					Converter >> C.Height;
-				}
 				else if (Key == "xoffset")
-				{
 					Converter >> C.XOffset;
-				}
 				else if (Key == "yoffset")
-				{
 					Converter >> C.YOffset;
-				}
 				else if (Key == "xadvance")
-				{
 					Converter >> C.XAdvance;
-				}
 				else if (Key == "page")
-				{
 					Converter >> C.Page;
-				}
 			}
-
-			Chars.insert(std::map<int, CharDescriptor>::value_type(CharID, C));
-
+			Chars.emplace(CharID, C);
 		}
-
 		else if (Read == "kernings")
 		{
 			while (!LineStream.eof())
@@ -217,12 +182,9 @@ bool BMFont::ParseFont(const std::string &fontfile)
 				//assign the correct value
 				Converter << Value;
 				if (Key == "count")
-				{
 					Converter >> KernCount;
-				}
 			}
 		}
-
 		else if (Read == "kerning")
 		{
 			while (!LineStream.eof())
@@ -236,22 +198,13 @@ bool BMFont::ParseFont(const std::string &fontfile)
 				//assign the correct value
 				Converter << Value;
 				if (Key == "first")
-				{
-					Converter >> K.First; Converter >> first;
-				}
-
+					Converter >> K.First;
 				else if (Key == "second")
-				{
-					Converter >> K.Second; Converter >> second;
-				}
-
+					Converter >> K.Second;
 				else if (Key == "amount")
-				{
-					Converter >> K.Amount; Converter >> amount;
-				}
+					Converter >> K.Amount;
 			}
-			//LOG_DEBUG("Done with this pass");
-			Kearn.push_back(K);
+			Kearn.emplace_back(K);
 		}
 	}
 	Stream.close();
@@ -312,21 +265,7 @@ float BMFont::GetStringWidth(std::string &string)
 {
 
 	float total = 0;
-	size_t len = string.length();
-	CharDescriptor  *f;
-
-	for (size_t i = 0; i != len; ++i)
-	{
-		f = &Chars[string[i]];
-
-		if (len > 1 && i < len)
-		{
-			total += GetKerningPair(string[i], string[i + 1]);
-		}
-
-		total += fscale * f->XAdvance;
-	}
-
+	total = GetStringWidth(string.c_str());
 	return total;
 }
 
@@ -334,14 +273,14 @@ float BMFont::GetStringWidth(std::string &string)
 //Simple loader that checks if the file exists and then loads it and the associated png
 bool  BMFont::LoadFont(std::string fontfile)
 {
-	
+
 	if (!datapath.empty())
 	{
 		fontfile = datapath + fontfile;
 	}
 	//Open Font
 	wrlog("Opening file %s", fontfile.c_str());
-	
+
 	std::ifstream Stream(fontfile);
 	if (!Stream)
 	{
@@ -412,8 +351,8 @@ void BMFont::MathTableInit()
 {
 	for (int a = 0; a < 360; a++)
 	{
-		_sin[a] = (float)sin((float)a * 3.14159265358979323846264f / 180.0f); 
-		_cos[a] = (float)cos((float)a * 3.14159265358979323846264f / 180.0f); 
+		_sin[a] = (float)sin((float)a * 3.14159265358979323846264f / 180.0f);
+		_cos[a] = (float)cos((float)a * 3.14159265358979323846264f / 180.0f);
 	}
 }
 
@@ -421,7 +360,6 @@ void BMFont::MathTableInit()
 void BMFont::SetAngle(int angle)
 {
 	if (angle > 360 || angle < -360) angle = 0;
-
 	if (angle < 0) angle = 360 + angle;
 	fangle = angle;
 }
@@ -494,18 +432,17 @@ void BMFont::PrintString(float x, float y, char *textstr)
 	float w;
 	float h;
 
-	//Calculate String Length
+	//Calculate String Length and save for later
 	Flen = strlen(textstr);
 
-	//Get Origin point, this can be modified to the the center of the string, add more code here.
-	fpoint center = MakePoint(x, y);
+	int total = 0;
 
-	int total;
 	switch (falign)
 	{
 	case fontalign::AlignNear:
-		x = 1;
-		break;
+		x = LineHeight;// 1 + Chars[textstr[0]].Width; //Dangerous, assumes there is at least 1 character passed to printing function. Add check for this somewhere.
+		break;									       //This places the Character 1 char width from the edge, so it doesn't disappear when rotated 90.
+		                                               // Switched to LineHeight, which covers spacing when normal or rotated 90.
 	case fontalign::AlignFar:
 		x = (float)(surface_width);
 		total = (int)GetStringWidth(textstr);
@@ -519,6 +456,10 @@ void BMFont::PrintString(float x, float y, char *textstr)
 		break;
 	default: break;
 	}
+
+	//Now that alignment is settled, Get the origin point for rotation, this can be modified to the the center of the string, add more code here.
+	// Currently this is the bottom left point.
+	fpoint center = MakePoint(x, y);
 
 	//Adjust for scaling factor
 	//If orgin of Ortho View is bottom left.
@@ -540,7 +481,6 @@ void BMFont::PrintString(float x, float y, char *textstr)
 
 		CurX = x + f->XOffset;
 		CurY = y;
-
 
 		//Adjust for Origin Y
 		if (forigin == fontorigin::Bottom)
@@ -566,16 +506,16 @@ void BMFont::PrintString(float x, float y, char *textstr)
 		//Calculate texture coords for this letter
 		//This could be pre-calculated. I'll work on that later.
 		s = (float)f->x / Width;
-		t = (float) 1.0f - (f->y / (float)Height);
+		t = (float)1.0f - (f->y / (float)Height);
 		w = (float)f->Width / Width;
 		h = (float)f->Height / (float)Height;
 
-		//If we are printing at an angle, there are a lot more calculations.
+		//If we are printing at an angle, there are a few more calculations.
 		if (fangle)
 		{
 			//I'm using a precalculated lookup table for 360 degrees, in 1 degree increments. 
 			//It's fast, and I like it. You can use your normal cos,sin and radians here if you need to 
-			//use smaller increments.
+			//use smaller increments or your converting this code to use a shader.
 
 			fpoint p0 = RotateAroundPoint(CurX, CurY, center.x, center.y, _cos[fangle], _sin[fangle]);
 			fpoint p1 = RotateAroundPoint(DstX, CurY, center.x, center.y, _cos[fangle], _sin[fangle]);
@@ -595,7 +535,7 @@ void BMFont::PrintString(float x, float y, char *textstr)
 			//V0
 			txlist.emplace_back(p0.x, p0.y, s, t, fcolor);
 		}
-		else //Were not printing at an angle, easy.
+		else //We're not printing at an angle, easy. Emplace back all 6 triangle vertex's.
 		{
 			//V0
 			txlist.emplace_back(CurX, CurY, s, t, fcolor);
@@ -617,7 +557,7 @@ void BMFont::PrintString(float x, float y, char *textstr)
 			x += GetKerningPair(textstr[i], textstr[i + 1]);
 		}
 
-		x += f->XAdvance;
+		x += f->XAdvance; //Move to the next character.
 	}
 }
 
@@ -728,7 +668,8 @@ void BMFont::PrintKerningPairs()
 	  //Kearning is checked for every character processed. This is expensive in terms of processing time.
 	for (size_t j = 0; j < Kearn.size(); j++)
 	{
-		wrlog("FIRST: %d SECOND: %d offset %d", Kearn[j].First, Kearn[j].Second, Kearn[j].Amount);
+		//wrlog("FIRST: %d SECOND: %d offset %d", Kearn[j].First, Kearn[j].Second, Kearn[j].Amount);
+		wrlog("%d,%d,%d,", Kearn[j].First, Kearn[j].Second, Kearn[j].Amount);
 	}
 
 }
